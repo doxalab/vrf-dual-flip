@@ -24,21 +24,8 @@ pub struct ConsumeRandomness<'info> {
         bump,
     )]
     pub game: Account<'info, GameState>,
-    #[account(
-        mut,
-        seeds = [
-            ESCROW_SEED,
-            TEST_GAME_SEED,
-            owner.key().as_ref(),
-        ],
-        bump,
-    )]
-    pub escrow_token_account: Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub owner_token_account: Account<'info, TokenAccount>,
     /// CHECK:
     pub owner: AccountInfo<'info>,
-    pub token_program: Program<'info, Token>
 }
 
 #[derive(Clone, AnchorSerialize, AnchorDeserialize)]
@@ -49,7 +36,7 @@ impl ConsumeRandomness<'_> {
         Ok(())
     }
 
-    pub fn actuate(ctx: Context<Self>, game_bump: u8) -> Result<()> {
+    pub fn actuate(ctx: Context<Self>, params: &ConsumeRandomnessParams) -> Result<()> {
         let vrf = ctx.accounts.vrf.load()?;
         let result_buffer = vrf.get_result()?;
         if result_buffer == [0u8; 32] {
@@ -71,34 +58,12 @@ impl ConsumeRandomness<'_> {
         msg!("Current VRF Value [1 - {}) = {}!", max_result, result);
 
         let game = &mut ctx.accounts.game;
-        let owner = ctx.accounts.owner.key();
         if result % 2 == game.owner_choice.into() {
             msg!("You are winner");
             game.winner = Some(game.owner);
             game.result = ((result as u64) % 2).into();
-            // Transferring the winning amount
-            let seeds = &[GAME_SEED, TEST_GAME_SEED, owner.as_ref(), &[game_bump]];
-            let signer = &[&seeds[..]];
-            let cpi_accounts = Transfer {
-                from: ctx.accounts.escrow_token_account.to_account_info(),
-                to: ctx.accounts.owner_token_account.to_account_info(),
-                authority: game.to_account_info(),
-            };
-            let token_program = ctx.accounts.token_program.to_account_info();
-            let transfer_ctx = CpiContext::new_with_signer(token_program, cpi_accounts, signer);
-            token::transfer(transfer_ctx, game.bet_amount)?;
         } else {
             msg!("You are loser");
-            let seeds = &[GAME_SEED, TEST_GAME_SEED, owner.as_ref(), &[game_bump]];
-            let signer = &[&seeds[..]];
-            let cpi_accounts = Transfer {
-                from: ctx.accounts.escrow_token_account.to_account_info(),
-                to: ctx.accounts.owner_token_account.to_account_info(),
-                authority: game.to_account_info(),
-            };
-            let token_program = ctx.accounts.token_program.to_account_info();
-            let transfer_ctx = CpiContext::new_with_signer(token_program, cpi_accounts, signer);
-            token::transfer(transfer_ctx, game.bet_amount)?;
         }
 
         if state.result != result {

@@ -6,3 +6,6 @@ pub use request_randomness::*;
 
 pub mod consume_randomness;
 pub use consume_randomness::*;
+
+pub mod claim_reward;
+pub use claim_reward::*;

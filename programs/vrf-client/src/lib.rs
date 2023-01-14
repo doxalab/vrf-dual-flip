@@ -31,10 +31,18 @@ pub mod vrf_client {
     #[access_control(ctx.accounts.validate(&ctx))]
     pub fn consume_randomness(
         ctx: Context<ConsumeRandomness>,
-        game_bump: u8,
-        // params: ConsumeRandomnessParams,
+        params: ConsumeRandomnessParams,
     ) -> Result<()> {
-        ConsumeRandomness::actuate(ctx, game_bump)
+        ConsumeRandomness::actuate(ctx, &params)
+    }
+
+    #[access_control(ctx.accounts.validate(&ctx))]
+    pub fn claim_reward(
+        ctx: Context<ClaimReward>,
+        game_id: String,
+        game_bump: u8,
+    ) -> Result<()> {
+        ClaimReward::actuate(ctx, game_id, game_bump)
     }
 }
 

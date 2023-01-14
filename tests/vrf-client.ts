@@ -100,6 +100,7 @@ describe("vrf-client", () => {
         ],
         program.programId
       );
+    console.log(gameBump);
     const [vrfAccount] = await switchboard.queue.createVrf({
       vrfKeypair,
       authority: vrfClientKey,
@@ -109,14 +110,11 @@ describe("vrf-client", () => {
           { pubkey: vrfClientKey, isSigner: false, isWritable: true },
           { pubkey: vrfKeypair.publicKey, isSigner: false, isWritable: false },
           { pubkey: gamePDA, isSigner: false, isWritable: true },
-          { pubkey: escrowPDA, isSigner: false, isWritable: true },
-          { pubkey: payerTokenAccount, isSigner: false, isWritable: true },
           { pubkey: payer.publicKey, isSigner: false, isWritable: false },
-          { pubkey: spl.TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
         ],
         ixData: new anchor.BorshInstructionCoder(program.idl).encode(
           "consumeRandomness",
-          gameBump
+          ""
         ),
       },
       enable: true,
@@ -232,6 +230,33 @@ describe("vrf-client", () => {
         sbv2.types.VrfStatus.StatusCallbackSuccess.kind,
       `VRF status mismatch, expected 'StatusCallbackSuccess', received ${newVrfState.status.kind}`
     );
+    const [gamePDA, gameBump] = await anchor.web3.PublicKey.findProgramAddress(
+      [Buffer.from("GAME"), Buffer.from(gameId), payer.publicKey.toBuffer()],
+      program.programId
+    );
+    const [escrowPDA, escrowBump] =
+      await anchor.web3.PublicKey.findProgramAddress(
+        [
+          Buffer.from("ESCROW"),
+          Buffer.from(gameId),
+          payer.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+    const tx = await program.methods
+      .claimReward(gameId, gameBump)
+      .accounts({
+        game: gamePDA,
+        owner: payer.publicKey,
+        escrowTokenAccount: escrowPDA,
+        ownerTokenAccount: payerTokenAccount,
+        tokenProgram: spl.TOKEN_PROGRAM_ID,
+      })
+      .signers([payer])
+      .rpc();
+    
+    console.log(tx);
 
     const payerTokenAccountUpdated = await spl.getAccount(
       provider.connection,
