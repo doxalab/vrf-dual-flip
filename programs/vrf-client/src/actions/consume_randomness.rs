@@ -61,10 +61,11 @@ impl ConsumeRandomness<'_> {
         if result % 2 == game.owner_choice.into() {
             msg!("You are winner");
             game.winner = Some(game.owner);
-            game.result = ((result as u64) % 2).into();
         } else {
             msg!("You are loser");
+            game.winner = Some(game.joinee.unwrap());
         }
+        game.result = ((result as u64) % 2).into();
 
         if state.result != result {
             state.result_buffer = result_buffer;

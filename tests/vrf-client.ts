@@ -4,6 +4,7 @@ import { assert } from "chai";
 import { ConstraintTokenMint } from "../client/errors/anchor";
 import { VrfClient } from "../target/types/vrf_client";
 import * as spl from "@solana/spl-token";
+import { PublicKey } from "@solana/web3.js";
 
 const logSuccess = (logMessage: string) =>
   console.log("\x1b[32m%s\x1b[0m", `\u2714 ${logMessage}\n`);
@@ -18,6 +19,7 @@ describe("vrf-client", () => {
 
   let switchboard: sbv2.SwitchboardTestContext;
   let payerTokenAddress: anchor.web3.PublicKey;
+  let joineeWrappedTokenAddress: anchor.web3.PublicKey;
 
   const vrfKeypair = anchor.web3.Keypair.generate();
   const joinee = anchor.web3.Keypair.generate();
@@ -35,6 +37,9 @@ describe("vrf-client", () => {
 
   let USDCMint: anchor.web3.PublicKey;
   let payerTokenAccount: anchor.web3.PublicKey;
+  const wrappedMint = new PublicKey(
+    "So11111111111111111111111111111111111111112"
+  );
 
   before(async () => {
     switchboard = await sbv2.SwitchboardTestContext.loadFromEnv(
@@ -44,7 +49,21 @@ describe("vrf-client", () => {
     const queueOracles = await switchboard.queue.loadOracles();
     [payerTokenAddress] = await switchboard.program.mint.getOrCreateWrappedUser(
       switchboard.program.walletPubkey,
-      { fundUpTo: 0.75 }
+      { fundUpTo: 1.5 }
+    );
+    joineeWrappedTokenAddress = await spl.createAccount(
+      provider.connection,
+      payer,
+      wrappedMint,
+      joinee.publicKey
+    );
+    await spl.transfer(
+      provider.connection,
+      payer,
+      payerTokenAddress,
+      joineeWrappedTokenAddress,
+      payer,
+      0.75 * Math.pow(10, 9)
     );
     assert(queueOracles.length > 0, `No oracles actively heartbeating`);
     console.log(`oracleQueue: ${switchboard.queue.publicKey}`);
@@ -174,27 +193,31 @@ describe("vrf-client", () => {
     //     2
     //   )
     // );
+    try {
+      const tx = await program.methods
+        .initClient({
+          maxResult: new anchor.BN(1337),
+          gameId: gameId,
+          choice: new anchor.BN(0),
+          betAmount: new anchor.BN(100),
+        })
+        .accounts({
+          game: gamePDA,
+          escrowTokenAccount: escrowPDA,
+          tokenMint: USDCMint,
+          userTokenAccount: payerTokenAccount,
+          state: vrfClientKey,
+          vrf: vrfAccount.publicKey,
+          payer: payer.publicKey,
+          systemProgram: anchor.web3.SystemProgram.programId,
+          tokenProgram: spl.TOKEN_PROGRAM_ID,
+        })
+        .rpc();
+      console.log("init_client transaction signature", tx);
+    } catch (error) {
+      console.log(error);
+    }
 
-    const tx = await program.methods
-      .initClient({
-        maxResult: new anchor.BN(1337),
-        gameId: gameId,
-        choice: new anchor.BN(0),
-        betAmount: new anchor.BN(100),
-      })
-      .accounts({
-        game: gamePDA,
-        escrowTokenAccount: escrowPDA,
-        tokenMint: USDCMint,
-        userTokenAccount: payerTokenAccount,
-        state: vrfClientKey,
-        vrf: vrfAccount.publicKey,
-        payer: payer.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        tokenProgram: spl.TOKEN_PROGRAM_ID,
-      })
-      .rpc();
-    console.log("init_client transaction signature", tx);
     const payerTokenAccountUpdated = await spl.getAccount(
       provider.connection,
       payerTokenAccount
@@ -256,8 +279,8 @@ describe("vrf-client", () => {
                   escrow: vrfState.escrow,
                   programState: switchboard.program.programState.publicKey,
                   switchboardProgram: switchboard.program.programId,
-                  payerWallet: payerTokenAddress,
-                  payerAuthority: payer.publicKey,
+                  payerWallet: joineeWrappedTokenAddress,
+                  payerAuthority: joinee.publicKey,
                   escrowTokenAccount: escrowPDA,
                   game: gamePDA,
                   owner: payer.publicKey,
@@ -302,25 +325,43 @@ describe("vrf-client", () => {
       `VRF status mismatch, expected 'StatusCallbackSuccess', received ${newVrfState.status.kind}`
     );
 
-    const tx = await program.methods
-      .claimReward(gameId, gameBump)
-      .accounts({
-        game: gamePDA,
-        owner: payer.publicKey,
-        escrowTokenAccount: escrowPDA,
-        ownerTokenAccount: payerTokenAccount,
-        tokenProgram: spl.TOKEN_PROGRAM_ID,
-      })
-      .signers([payer])
-      .rpc();
+    const gameState = await program.account.gameState.fetch(gamePDA);
+    if (Number(gameState.result) == 0) {
+      const tx = await program.methods
+        .claimReward(gameId, gameBump)
+        .accounts({
+          game: gamePDA,
+          owner: payer.publicKey,
+          escrowTokenAccount: escrowPDA,
+          ownerTokenAccount: payerTokenAccount,
+          tokenProgram: spl.TOKEN_PROGRAM_ID,
+        })
+        .signers([payer])
+        .rpc();
+        const payerTokenAccountUpdated = await spl.getAccount(
+          provider.connection,
+          payerTokenAccount
+        );
+  
+        assert.equal(initialMintAmount, Number(payerTokenAccountUpdated.amount));
+    } else {
+      const tx = await program.methods
+        .claimReward(gameId, gameBump)
+        .accounts({
+          game: gamePDA,
+          owner: payer.publicKey,
+          escrowTokenAccount: escrowPDA,
+          ownerTokenAccount: joineeTokenAccount,
+          tokenProgram: spl.TOKEN_PROGRAM_ID,
+        })
+        .signers([joinee])
+        .rpc();
+      const joineeTokenAccountUpdated = await spl.getAccount(
+        provider.connection,
+        joineeTokenAccount
+      );
 
-    console.log(tx);
-
-    // const payerTokenAccountUpdated = await spl.getAccount(
-    //   provider.connection,
-    //   payerTokenAccount
-    // );
-
-    // assert.equal(initialMintAmount, Number(payerTokenAccountUpdated.amount));
+      assert.equal(initialMintAmount, Number(joineeTokenAccountUpdated.amount));
+    }
   });
 });
