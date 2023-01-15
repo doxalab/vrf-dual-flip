@@ -56,18 +56,7 @@ impl ClaimReward<'_> {
             let transfer_ctx = CpiContext::new_with_signer(token_program, cpi_accounts, signer);
             token::transfer(transfer_ctx, game.bet_amount)?;
         } else {
-            msg!("You are loser");
-            msg!("{}", game_bump);
-            let seeds = &[GAME_SEED, TEST_GAME_SEED, owner.as_ref(), &[game_bump]];
-            let signer = &[&seeds[..]];
-            let cpi_accounts = Transfer {
-                from: ctx.accounts.escrow_token_account.to_account_info(),
-                to: ctx.accounts.owner_token_account.to_account_info(),
-                authority: game.to_account_info(),
-            };
-            let token_program = ctx.accounts.token_program.to_account_info();
-            let transfer_ctx = CpiContext::new_with_signer(token_program, cpi_accounts, signer);
-            token::transfer(transfer_ctx, game.bet_amount)?;
+            msg!("You are loser, cannot claim");
         }
 
         Ok(())

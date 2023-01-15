@@ -13,6 +13,16 @@ pub struct RequestRandomness<'info> {
         has_one = vrf @ VrfClientErrorCode::InvalidVrfAccount
     )]
     pub state: AccountLoader<'info, VrfClientState>,
+    #[account(
+        mut,
+        seeds = [
+            GAME_SEED,
+            params.game_id.as_ref(),
+            owner.key().as_ref(),
+        ],
+        bump,
+    )]
+    pub game: Box<Account<'info, GameState>>,
 
     // SWITCHBOARD ACCOUNTS
     #[account(mut,
@@ -39,7 +49,7 @@ pub struct RequestRandomness<'info> {
             escrow.owner == program_state.key()
             && escrow.mint == program_state.load()?.token_mint
     )]
-    pub escrow: Account<'info, TokenAccount>,
+    pub escrow: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub program_state: AccountLoader<'info, SbState>,
     /// CHECK:
@@ -55,10 +65,26 @@ pub struct RequestRandomness<'info> {
             payer_wallet.owner == payer_authority.key()
             && escrow.mint == program_state.load()?.token_mint
     )]
-    pub payer_wallet: Account<'info, TokenAccount>,
+    pub payer_wallet: Box<Account<'info, TokenAccount>>,
     /// CHECK:
     #[account(signer)]
     pub payer_authority: AccountInfo<'info>,
+    #[account(
+        mut,
+        seeds = [
+            ESCROW_SEED,
+            params.game_id.as_ref(),
+            owner.key().as_ref(),
+        ],
+        bump,
+    )] 
+    pub escrow_token_account: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub user_token_account: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub joinee: Signer<'info>,
+    /// CHECK:
+    pub owner: AccountInfo<'info>,
 
     // SYSTEM ACCOUNTS
     /// CHECK:
@@ -71,6 +97,7 @@ pub struct RequestRandomness<'info> {
 pub struct RequestRandomnessParams {
     pub permission_bump: u8,
     pub switchboard_state_bump: u8,
+    pub game_id: String
 }
 
 impl RequestRandomness<'_> {
@@ -78,7 +105,7 @@ impl RequestRandomness<'_> {
         Ok(())
     }
 
-    pub fn actuate(ctx: &Context<Self>, params: &RequestRandomnessParams) -> Result<()> {
+    pub fn actuate(ctx: Context<Self>, params: &RequestRandomnessParams) -> Result<()> {
         let client_state = ctx.accounts.state.load()?;
         let bump = client_state.bump.clone();
         let max_result = client_state.max_result;
@@ -93,8 +120,8 @@ impl RequestRandomness<'_> {
             queue_authority: ctx.accounts.queue_authority.to_account_info(),
             data_buffer: ctx.accounts.data_buffer.to_account_info(),
             permission: ctx.accounts.permission.to_account_info(),
-            escrow: ctx.accounts.escrow.clone(),
-            payer_wallet: ctx.accounts.payer_wallet.clone(),
+            escrow: *ctx.accounts.escrow.clone(),
+            payer_wallet: *ctx.accounts.payer_wallet.clone(),
             payer_authority: ctx.accounts.payer_authority.to_account_info(),
             recent_blockhashes: ctx.accounts.recent_blockhashes.to_account_info(),
             program_state: ctx.accounts.program_state.to_account_info(),
@@ -114,6 +141,20 @@ impl RequestRandomness<'_> {
 
         let mut client_state = ctx.accounts.state.load_mut()?;
         client_state.result = 0;
+
+        let game = &mut ctx.accounts.game; 
+        game.joinee = Some(ctx.accounts.joinee.key());
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.user_token_account.to_account_info(),
+            to: ctx.accounts.escrow_token_account.to_account_info(),
+            authority: ctx.accounts.joinee.to_account_info()
+        };
+        let token_program = ctx.accounts.token_program.to_account_info();
+        let transfer_ctx = CpiContext::new(token_program, cpi_accounts);
+        token::transfer(
+            transfer_ctx,
+            game.bet_amount 
+        )?;
 
         emit!(RandomnessRequested {
             vrf_client: ctx.accounts.state.key(),

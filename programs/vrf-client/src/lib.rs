@@ -25,7 +25,7 @@ pub mod vrf_client {
         ctx: Context<RequestRandomness>,
         params: RequestRandomnessParams,
     ) -> Result<()> {
-        RequestRandomness::actuate(&ctx, &params)
+        RequestRandomness::actuate(ctx, &params)
     }
 
     #[access_control(ctx.accounts.validate(&ctx))]
