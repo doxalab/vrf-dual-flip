@@ -9,3 +9,6 @@ pub use consume_randomness::*;
 
 pub mod claim_reward;
 pub use claim_reward::*;
+
+pub mod init_vrf;
+pub use init_vrf::*;

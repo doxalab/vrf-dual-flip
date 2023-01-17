@@ -9,9 +9,14 @@ export interface InitClientArgs {
 }
 
 export interface InitClientAccounts {
+  game: PublicKey
+  escrowTokenAccount: PublicKey
+  userTokenAccount: PublicKey
+  tokenMint: PublicKey
   state: PublicKey
   vrf: PublicKey
   payer: PublicKey
+  tokenProgram: PublicKey
   systemProgram: PublicKey
 }
 
@@ -19,9 +24,14 @@ export const layout = borsh.struct([types.InitClientParams.layout("params")])
 
 export function initClient(args: InitClientArgs, accounts: InitClientAccounts) {
   const keys: Array<AccountMeta> = [
+    { pubkey: accounts.game, isSigner: false, isWritable: true },
+    { pubkey: accounts.escrowTokenAccount, isSigner: false, isWritable: true },
+    { pubkey: accounts.userTokenAccount, isSigner: false, isWritable: true },
+    { pubkey: accounts.tokenMint, isSigner: false, isWritable: false },
     { pubkey: accounts.state, isSigner: false, isWritable: true },
     { pubkey: accounts.vrf, isSigner: false, isWritable: false },
     { pubkey: accounts.payer, isSigner: true, isWritable: true },
+    { pubkey: accounts.tokenProgram, isSigner: false, isWritable: false },
     { pubkey: accounts.systemProgram, isSigner: false, isWritable: false },
   ]
   const identifier = Buffer.from([30, 50, 186, 118, 60, 68, 27, 155])

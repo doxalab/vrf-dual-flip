@@ -14,18 +14,6 @@ pub struct ConsumeRandomness<'info> {
     )]
     pub state: AccountLoader<'info, VrfClientState>,
     pub vrf: AccountLoader<'info, VrfAccountData>,
-    #[account(
-        mut,
-        seeds = [
-            GAME_SEED,
-            TEST_GAME_SEED,
-            owner.key().as_ref(),
-        ],
-        bump,
-    )]
-    pub game: Account<'info, GameState>,
-    /// CHECK:
-    pub owner: AccountInfo<'info>,
 }
 
 #[derive(Clone, AnchorSerialize, AnchorDeserialize)]
@@ -57,15 +45,15 @@ impl ConsumeRandomness<'_> {
         let result = value[0] % max_result as u128 + 1;
         msg!("Current VRF Value [1 - {}) = {}!", max_result, result);
 
-        let game = &mut ctx.accounts.game;
-        if result % 2 == game.owner_choice.into() {
-            msg!("You are winner");
-            game.winner = Some(game.owner);
-        } else {
-            msg!("You are loser");
-            game.winner = Some(game.joinee.unwrap());
-        }
-        game.result = ((result as u64) % 2).into();
+        // let game = &mut ctx.accounts.game;
+        // if result % 2 == game.owner_choice.into() {
+        //     msg!("You are winner");
+        //     game.winner = Some(game.owner);
+        // } else {
+        //     msg!("You are loser");
+        //     game.winner = Some(game.joinee.unwrap());
+        // }
+        // game.result = ((result as u64) % 2).into();
 
         if state.result != result {
             state.result_buffer = result_buffer;

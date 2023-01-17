@@ -4,36 +4,38 @@ import * as borsh from "@project-serum/borsh" // eslint-disable-line @typescript
 import * as types from "../types" // eslint-disable-line @typescript-eslint/no-unused-vars
 import { PROGRAM_ID } from "../programId"
 
-export interface ConsumeRandomnessArgs {
-  params: types.ConsumeRandomnessParamsFields
+export interface ClaimRewardArgs {
+  gameId: string
+  gameBump: number
 }
 
-export interface ConsumeRandomnessAccounts {
-  state: PublicKey
-  vrf: PublicKey
+export interface ClaimRewardAccounts {
   game: PublicKey
+  escrowTokenAccount: PublicKey
+  ownerTokenAccount: PublicKey
   owner: PublicKey
+  tokenProgram: PublicKey
 }
 
-export const layout = borsh.struct([
-  types.ConsumeRandomnessParams.layout("params"),
-])
+export const layout = borsh.struct([borsh.str("gameId"), borsh.u8("gameBump")])
 
-export function consumeRandomness(
-  args: ConsumeRandomnessArgs,
-  accounts: ConsumeRandomnessAccounts
+export function claimReward(
+  args: ClaimRewardArgs,
+  accounts: ClaimRewardAccounts
 ) {
   const keys: Array<AccountMeta> = [
-    { pubkey: accounts.state, isSigner: false, isWritable: true },
-    { pubkey: accounts.vrf, isSigner: false, isWritable: false },
     { pubkey: accounts.game, isSigner: false, isWritable: true },
-    { pubkey: accounts.owner, isSigner: false, isWritable: false },
+    { pubkey: accounts.escrowTokenAccount, isSigner: false, isWritable: true },
+    { pubkey: accounts.ownerTokenAccount, isSigner: false, isWritable: true },
+    { pubkey: accounts.owner, isSigner: true, isWritable: true },
+    { pubkey: accounts.tokenProgram, isSigner: false, isWritable: false },
   ]
-  const identifier = Buffer.from([190, 217, 49, 162, 99, 26, 73, 234])
+  const identifier = Buffer.from([149, 95, 181, 242, 94, 90, 158, 162])
   const buffer = Buffer.alloc(1000)
   const len = layout.encode(
     {
-      params: types.ConsumeRandomnessParams.toEncodable(args.params),
+      gameId: args.gameId,
+      gameBump: args.gameBump,
     },
     buffer
   )

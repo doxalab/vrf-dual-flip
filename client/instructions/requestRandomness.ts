@@ -10,6 +10,7 @@ export interface RequestRandomnessArgs {
 
 export interface RequestRandomnessAccounts {
   state: PublicKey
+  game: PublicKey
   vrf: PublicKey
   oracleQueue: PublicKey
   queueAuthority: PublicKey
@@ -21,6 +22,10 @@ export interface RequestRandomnessAccounts {
   switchboardProgram: PublicKey
   payerWallet: PublicKey
   payerAuthority: PublicKey
+  escrowTokenAccount: PublicKey
+  userTokenAccount: PublicKey
+  joinee: PublicKey
+  owner: PublicKey
   recentBlockhashes: PublicKey
   tokenProgram: PublicKey
 }
@@ -35,6 +40,7 @@ export function requestRandomness(
 ) {
   const keys: Array<AccountMeta> = [
     { pubkey: accounts.state, isSigner: false, isWritable: true },
+    { pubkey: accounts.game, isSigner: false, isWritable: true },
     { pubkey: accounts.vrf, isSigner: false, isWritable: true },
     { pubkey: accounts.oracleQueue, isSigner: false, isWritable: true },
     { pubkey: accounts.queueAuthority, isSigner: false, isWritable: true },
@@ -45,6 +51,10 @@ export function requestRandomness(
     { pubkey: accounts.switchboardProgram, isSigner: false, isWritable: false },
     { pubkey: accounts.payerWallet, isSigner: false, isWritable: true },
     { pubkey: accounts.payerAuthority, isSigner: true, isWritable: false },
+    { pubkey: accounts.escrowTokenAccount, isSigner: false, isWritable: true },
+    { pubkey: accounts.userTokenAccount, isSigner: false, isWritable: true },
+    { pubkey: accounts.joinee, isSigner: true, isWritable: true },
+    { pubkey: accounts.owner, isSigner: false, isWritable: false },
     { pubkey: accounts.recentBlockhashes, isSigner: false, isWritable: false },
     { pubkey: accounts.tokenProgram, isSigner: false, isWritable: false },
   ]

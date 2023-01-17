@@ -10,3 +10,5 @@ export type {
   ConsumeRandomnessArgs,
   ConsumeRandomnessAccounts,
 } from "./consumeRandomness"
+export { claimReward } from "./claimReward"
+export type { ClaimRewardArgs, ClaimRewardAccounts } from "./claimReward"

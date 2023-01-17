@@ -1,3 +1,8 @@
+export { ClaimRewardParams } from "./ClaimRewardParams"
+export type {
+  ClaimRewardParamsFields,
+  ClaimRewardParamsJSON,
+} from "./ClaimRewardParams"
 export { ConsumeRandomnessParams } from "./ConsumeRandomnessParams"
 export type {
   ConsumeRandomnessParamsFields,

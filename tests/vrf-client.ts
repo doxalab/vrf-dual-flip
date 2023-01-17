@@ -5,6 +5,7 @@ import { ConstraintTokenMint } from "../client/errors/anchor";
 import { VrfClient } from "../target/types/vrf_client";
 import * as spl from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
+import bs58 from "bs58";
 
 const logSuccess = (logMessage: string) =>
   console.log("\x1b[32m%s\x1b[0m", `\u2714 ${logMessage}\n`);
@@ -23,6 +24,11 @@ describe("vrf-client", () => {
 
   const vrfKeypair = anchor.web3.Keypair.generate();
   const joinee = anchor.web3.Keypair.generate();
+  // const alicePrivate =
+  //   "472ZS33Lftn7wdM31QauCkmpgFKFvgBRg6Z6NGtA6JgeRi1NfeZFRNvNi3b3sh5jvrQWrgiTimr8giVs9oq4UM5g";
+  // const joinee = anchor.web3.Keypair.fromSecretKey(
+  //   new Uint8Array(bs58.decode(alicePrivate))
+  // );
   let joineeTokenAccount: anchor.web3.PublicKey;
 
   let vrfClientKey: anchor.web3.PublicKey;
@@ -51,6 +57,7 @@ describe("vrf-client", () => {
       switchboard.program.walletPubkey,
       { fundUpTo: 1.5 }
     );
+
     joineeWrappedTokenAddress = await spl.createAccount(
       provider.connection,
       payer,
@@ -169,8 +176,6 @@ describe("vrf-client", () => {
         accounts: [
           { pubkey: vrfClientKey, isSigner: false, isWritable: true },
           { pubkey: vrfKeypair.publicKey, isSigner: false, isWritable: false },
-          { pubkey: gamePDA, isSigner: false, isWritable: true },
-          { pubkey: payer.publicKey, isSigner: false, isWritable: false },
         ],
         ixData: new anchor.BorshInstructionCoder(program.idl).encode(
           "consumeRandomness",
@@ -231,6 +236,7 @@ describe("vrf-client", () => {
 
   it("request_randomness", async () => {
     const state = await program.account.vrfClientState.fetch(vrfClientKey);
+    console.log(state);
     const vrfAccount = new sbv2.VrfAccount(switchboard.program, state.vrf);
     const vrfState = await vrfAccount.loadData();
     const queueState = await switchboard.queue.loadData();
@@ -338,12 +344,12 @@ describe("vrf-client", () => {
         })
         .signers([payer])
         .rpc();
-        const payerTokenAccountUpdated = await spl.getAccount(
-          provider.connection,
-          payerTokenAccount
-        );
-  
-        assert.equal(initialMintAmount, Number(payerTokenAccountUpdated.amount));
+      const payerTokenAccountUpdated = await spl.getAccount(
+        provider.connection,
+        payerTokenAccount
+      );
+
+      assert.equal(initialMintAmount, Number(payerTokenAccountUpdated.amount));
     } else {
       const tx = await program.methods
         .claimReward(gameId, gameBump)

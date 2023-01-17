@@ -16,6 +16,18 @@ pub struct ClaimReward<'info> {
     #[account(
         mut,
         seeds = [
+            STATE_SEED,
+            vrf.key().as_ref(),
+        ],
+        bump = state.load()?.bump,
+        has_one = vrf @ VrfClientErrorCode::InvalidVrfAccount
+    )]
+    pub state: AccountLoader<'info, VrfClientState>,
+    #[account(mut)]
+    pub vrf: AccountLoader<'info, VrfAccountData>,
+    #[account(
+        mut,
+        seeds = [
             ESCROW_SEED,
             game_id.as_ref(),
             owner.key().as_ref(),
@@ -39,10 +51,11 @@ impl ClaimReward<'_> {
     }
 
     pub fn actuate(ctx: Context<Self>, _game_id: String, game_bump: u8) -> Result<()> {
-
+        let state = ctx.accounts.state.load_mut()?;
         let game = &mut ctx.accounts.game;
+        let result : u64 = (state.result %2) as u64;
         let owner = ctx.accounts.owner.key();
-        if game.winner == Some(ctx.accounts.owner.key()) {
+        if (owner == game.owner && result == game.owner_choice) || (owner != game.owner && result != game.owner_choice) {
             msg!("You are winner");
             // Transferring the winning amount
             let seeds = &[GAME_SEED, TEST_GAME_SEED, owner.as_ref(), &[game_bump]];

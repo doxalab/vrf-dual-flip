@@ -9,7 +9,7 @@ pub use switchboard_v2::{
     OracleQueueAccountData, PermissionAccountData, SbState, VrfAccountData, VrfRequestRandomness,
 };
 
-declare_id!("FabKWUef4JbmvXGcqC8ESN7kGS16vFQTD6aEBRxk9FAN");
+declare_id!("5gs7CTbe8xGde2Fs6R5U7LvCgZQoHTyaKHYF4Rs2oouW");
 
 #[program]
 pub mod vrf_client {
@@ -18,6 +18,11 @@ pub mod vrf_client {
     #[access_control(ctx.accounts.validate(&ctx, &params))]
     pub fn init_client(ctx: Context<InitClient>, params: InitClientParams) -> Result<()> {
         InitClient::actuate(ctx, &params)
+    }
+
+    #[access_control(ctx.accounts.validate(&ctx, &params))]
+    pub fn init_vrf(ctx: Context<InitVrf>, params: InitVrfParams) -> Result<()> {
+        InitVrf::actuate(ctx, &params)
     }
 
     #[access_control(ctx.accounts.validate(&ctx, &params))]
@@ -47,6 +52,7 @@ pub mod vrf_client {
 }
 
 const STATE_SEED: &[u8] = b"CLIENTSEED";
+const VRF_SEED: &[u8] = b"VRF";
 const GAME_SEED: &[u8] = b"GAME";
 const ESCROW_SEED: &[u8] = b"ESCROW";
 
@@ -71,6 +77,11 @@ pub struct GameState {
     pub bet_amount: u64,
     pub result: Option<u64>,
     pub room_creation_time: i64
+}
+
+#[account]
+pub struct VRFKey {
+    pub key: Pubkey,
 }
 
 #[error_code]

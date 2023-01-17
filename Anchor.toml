@@ -2,7 +2,9 @@
 seeds = false
 skip-lint = false
 [programs.localnet]
-vrf_client = "FabKWUef4JbmvXGcqC8ESN7kGS16vFQTD6aEBRxk9FAN"
+vrf_client = "5gs7CTbe8xGde2Fs6R5U7LvCgZQoHTyaKHYF4Rs2oouW"
+[programs.devnet]
+vrf_client = "5gs7CTbe8xGde2Fs6R5U7LvCgZQoHTyaKHYF4Rs2oouW"
 
 [registry]
 url = "https://api.apr.dev"

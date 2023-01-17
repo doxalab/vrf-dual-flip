@@ -6,25 +6,33 @@ import * as borsh from "@project-serum/borsh"
 export interface RequestRandomnessParamsFields {
   permissionBump: number
   switchboardStateBump: number
+  gameId: string
 }
 
 export interface RequestRandomnessParamsJSON {
   permissionBump: number
   switchboardStateBump: number
+  gameId: string
 }
 
 export class RequestRandomnessParams {
   readonly permissionBump: number
   readonly switchboardStateBump: number
+  readonly gameId: string
 
   constructor(fields: RequestRandomnessParamsFields) {
     this.permissionBump = fields.permissionBump
     this.switchboardStateBump = fields.switchboardStateBump
+    this.gameId = fields.gameId
   }
 
   static layout(property?: string) {
     return borsh.struct(
-      [borsh.u8("permissionBump"), borsh.u8("switchboardStateBump")],
+      [
+        borsh.u8("permissionBump"),
+        borsh.u8("switchboardStateBump"),
+        borsh.str("gameId"),
+      ],
       property
     )
   }
@@ -34,6 +42,7 @@ export class RequestRandomnessParams {
     return new RequestRandomnessParams({
       permissionBump: obj.permissionBump,
       switchboardStateBump: obj.switchboardStateBump,
+      gameId: obj.gameId,
     })
   }
 
@@ -41,6 +50,7 @@ export class RequestRandomnessParams {
     return {
       permissionBump: fields.permissionBump,
       switchboardStateBump: fields.switchboardStateBump,
+      gameId: fields.gameId,
     }
   }
 
@@ -48,6 +58,7 @@ export class RequestRandomnessParams {
     return {
       permissionBump: this.permissionBump,
       switchboardStateBump: this.switchboardStateBump,
+      gameId: this.gameId,
     }
   }
 
@@ -55,6 +66,7 @@ export class RequestRandomnessParams {
     return new RequestRandomnessParams({
       permissionBump: obj.permissionBump,
       switchboardStateBump: obj.switchboardStateBump,
+      gameId: obj.gameId,
     })
   }
 

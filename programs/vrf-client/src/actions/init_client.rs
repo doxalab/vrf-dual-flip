@@ -42,9 +42,9 @@ pub struct InitClient<'info> {
         bump,
     )]
     pub state: AccountLoader<'info, VrfClientState>,
-    #[account(
-        constraint = vrf.load()?.authority == state.key() @ VrfClientErrorCode::InvalidVrfAuthorityError
-    )]
+    // #[account(
+    //     constraint = vrf.load()?.authority == state.key() @ VrfClientErrorCode::InvalidVrfAuthorityError
+    // )]
     pub vrf: AccountLoader<'info, VrfAccountData>,
     #[account(mut)]
     pub payer: Signer<'info>,
