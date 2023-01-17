@@ -1,11 +1,12 @@
 import * as anchor from "@project-serum/anchor";
 import * as sbv2 from "@switchboard-xyz/solana.js";
 import { assert } from "chai";
-import { ConstraintTokenMint } from "../client/errors/anchor";
+// import { ConstraintTokenMint } from "../client/errors/anchor";
 import { VrfClient } from "../target/types/vrf_client";
 import * as spl from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
+import { QueueAccount } from "@switchboard-xyz/solana.js";
 
 const logSuccess = (logMessage: string) =>
   console.log("\x1b[32m%s\x1b[0m", `\u2714 ${logMessage}\n`);

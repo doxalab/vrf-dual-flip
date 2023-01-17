@@ -2,15 +2,15 @@
 seeds = false
 skip-lint = false
 [programs.localnet]
-vrf_client = "5gs7CTbe8xGde2Fs6R5U7LvCgZQoHTyaKHYF4Rs2oouW"
+vrf = "21yN3N5jquXxbPDSRZiqANhZsDQUAgQvz5vNysHXL3ut"
 [programs.devnet]
-vrf_client = "5gs7CTbe8xGde2Fs6R5U7LvCgZQoHTyaKHYF4Rs2oouW"
+vrf = "21yN3N5jquXxbPDSRZiqANhZsDQUAgQvz5vNysHXL3ut"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

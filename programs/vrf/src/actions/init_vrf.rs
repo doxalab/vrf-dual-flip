@@ -14,9 +14,6 @@ pub struct InitVrf<'info> {
         bump,
     )]
     pub state: Account<'info, VRFKey>,
-    #[account(
-        constraint = vrf.load()?.authority == state.key() @ VrfClientErrorCode::InvalidVrfAuthorityError
-    )]
     pub vrf: AccountLoader<'info, VrfAccountData>,
     #[account(mut)]
     pub payer: Signer<'info>,

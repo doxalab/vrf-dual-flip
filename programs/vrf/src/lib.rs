@@ -9,10 +9,10 @@ pub use switchboard_v2::{
     OracleQueueAccountData, PermissionAccountData, SbState, VrfAccountData, VrfRequestRandomness,
 };
 
-declare_id!("5gs7CTbe8xGde2Fs6R5U7LvCgZQoHTyaKHYF4Rs2oouW");
+declare_id!("21yN3N5jquXxbPDSRZiqANhZsDQUAgQvz5vNysHXL3ut");
 
 #[program]
-pub mod vrf_client {
+pub mod vrf {
     use super::*;
 
     #[access_control(ctx.accounts.validate(&ctx, &params))]
