@@ -52,7 +52,7 @@ pub mod vrf {
 }
 
 const STATE_SEED: &[u8] = b"CLIENTSEED";
-const VRF_SEED: &[u8] = b"VRF";
+const VRF_SEED: &[u8] = b"VRFGAME";
 const GAME_SEED: &[u8] = b"GAME";
 const ESCROW_SEED: &[u8] = b"ESCROW";
 

@@ -14,6 +14,17 @@ pub struct InitVrf<'info> {
         bump,
     )]
     pub state: Account<'info, VRFKey>,
+    #[account(
+        init,
+        seeds = [
+            STATE_SEED,
+            vrf.key().as_ref()
+        ],
+        payer = payer,
+        space = 8 + std::mem::size_of::<VrfClientState>(),
+        bump,
+    )]
+    pub vrf_state: AccountLoader<'info, VrfClientState>,
     pub vrf: AccountLoader<'info, VrfAccountData>,
     #[account(mut)]
     pub payer: Signer<'info>,

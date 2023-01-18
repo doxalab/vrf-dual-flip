@@ -32,13 +32,11 @@ pub struct InitClient<'info> {
     pub user_token_account: Account<'info, TokenAccount>,
     pub token_mint: Account<'info, Mint>,
     #[account(
-        init,
+        mut,
         seeds = [
             STATE_SEED,
             vrf.key().as_ref()
         ],
-        payer = payer,
-        space = 8 + std::mem::size_of::<VrfClientState>(),
         bump,
     )]
     pub state: AccountLoader<'info, VrfClientState>,
@@ -73,7 +71,7 @@ impl InitClient<'_> {
     pub fn actuate(ctx: Context<Self>, params: &InitClientParams) -> Result<()> {
         msg!("init_client actuate");
 
-        let mut state = ctx.accounts.state.load_init()?;
+        let mut state = ctx.accounts.state.load_mut()?;
         *state = VrfClientState::default();
         state.bump = ctx.bumps.get("state").unwrap().clone();
         state.vrf = ctx.accounts.vrf.key();
